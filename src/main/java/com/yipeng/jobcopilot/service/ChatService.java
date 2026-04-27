@@ -13,6 +13,8 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
+import java.time.Duration;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -225,46 +227,60 @@ public class ChatService {
      * This prevents repeated AI calls and duplicate match_results rows
      * every time the user sends a chat message in the same session.
      */
+    private final RedisTemplate<String, Object> redisTemplate;
+
     private String buildMatchContext(ChatSession session) {
         Long resumeId  = session.getResume().getId();
         Long jobPostId = session.getJobPost().getId();
+        String cacheKey = "match:" + resumeId + ":" + jobPostId;
 
         try {
-            // ── Step 1: check cache ────────────────────────────────────────────
-            Optional<MatchResult> cached = matchResultRepository
-                    .findTopByResumeIdAndJobPostIdOrderByCreatedAtDesc(resumeId, jobPostId);
-
-            if (cached.isPresent()) {
-                MatchResult result = cached.get();
-                log.debug("Match context: using cached result id={} for resume={} jobPost={}",
-                        result.getId(), resumeId, jobPostId);
-
-                return """
-                        Match Analysis (cached):
-                        - Match score: %d%%
-                        - Summary: %s
-                        """.formatted(result.getMatchScore(), safe(result.getAiSummary()));
+            // ── Step 1: check Redis cache ──────────────────────────────────────
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null) {
+                log.debug("Match context: Redis cache hit for key={}", cacheKey);
+                return cached.toString();
             }
 
-            // ── Step 2: no cache → run full analysis ───────────────────────────
-            log.info("Match context: no cached result found, running analysis for resume={} jobPost={}",
-                    resumeId, jobPostId);
+            // ── Step 2: check DB cache ─────────────────────────────────────────
+            Optional<MatchResult> dbCached = matchResultRepository
+                    .findTopByResumeIdAndJobPostIdOrderByCreatedAtDesc(resumeId, jobPostId);
 
-            MatchAnalysisResponse match = matchAnalysisService.analyzeMatch(
-                    session.getUser().getEmail(), resumeId, jobPostId);
-
-            return """
+            String matchContext;
+            if (dbCached.isPresent()) {
+                MatchResult result = dbCached.get();
+                log.debug("Match context: DB cache hit id={}", result.getId());
+                matchContext = """
+                    Match Analysis (cached):
+                    - Match score: %d%%
+                    - Summary: %s
+                    """.formatted(result.getMatchScore(), safe(result.getAiSummary()));
+            } else {
+                // ── Step 3: run full analysis ──────────────────────────────────
+                log.info("Match context: no cache found, running analysis for resume={} jobPost={}",
+                        resumeId, jobPostId);
+                MatchAnalysisResponse match = matchAnalysisService.analyzeMatch(
+                        session.getUser().getEmail(), resumeId, jobPostId);
+                matchContext = """
                     Match Analysis:
                     - Weighted match score: %d%%
                     - Matched skills: %s
                     - Missing skills: %s
                     """.formatted(
-                    match.getWeightedMatchScore(),
-                    match.getMatchedSkills(),
-                    match.getMissingSkills());
+                        match.getWeightedMatchScore(),
+                        match.getMatchedSkills(),
+                        match.getMissingSkills());
+            }
+
+            // ── Step 4: store in Redis (1 hour TTL) ───────────────────────────
+            redisTemplate.opsForValue().set(cacheKey, matchContext,
+                    Duration.ofHours(1));
+            log.debug("Match context: stored in Redis key={}", cacheKey);
+
+            return matchContext;
 
         } catch (Exception e) {
-            log.warn("Could not build match context for resume={} jobPost={}: {}",
+            log.warn("Match context error for resume={} jobPost={}: {}",
                     resumeId, jobPostId, e.getMessage());
             return "";
         }
