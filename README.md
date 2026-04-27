@@ -19,6 +19,12 @@ The backend provides authentication, resume and job post management, AI analysis
 
 ---
 
+## Demo
+
+[![JobCopilot Demo](https://cdn.loom.com/sessions/thumbnails/3ea576ea2ac34f3294e141e2b7703a0c-with-play.gif)](https://www.loom.com/share/3ea576ea2ac34f3294e141e2b7703a0c)
+
+> 2 min 50 sec walkthrough — Sign up, upload resume, add job post, match analysis, cover letter generation, and RAG chat.
+
 ## Screenshots
 
 ### Login
