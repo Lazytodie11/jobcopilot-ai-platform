@@ -139,8 +139,16 @@ public class JobPostService {
                     jobPost.getDescription()
             );
         } catch (Exception e) {
-            log.error("Failed to publish JobPostEmbedEvent for jobPostId={}: {}",
-                    jobPost.getId(), e.getMessage());
+            log.warn("Kafka unavailable, falling back to sync embedding for jobPostId={}", jobPost.getId());
+            try {
+                jobPostEmbeddingService.embedJobPost(
+                        jobPost.getId(),
+                        jobPost.getUser().getId(),
+                        jobPost.getDescription()
+                );
+            } catch (Exception embedException) {
+                log.error("Sync embedding also failed: {}", embedException.getMessage());
+            }
         }
     }
 

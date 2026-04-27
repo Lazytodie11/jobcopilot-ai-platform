@@ -65,9 +65,12 @@ public class ResumeController {
             embeddingEventProducer.publishResumeEmbedEvent(
                     saved.getId(), saved.getUserId(), content);
         } catch (Exception e) {
-            log.error("Failed to publish ResumeEmbedEvent for resumeId={}: {}",
-                    saved.getId(), e.getMessage());
-            // Non-fatal: resume is saved, embedding will need manual trigger
+            log.warn("Kafka unavailable, falling back to sync embedding for resumeId={}", saved.getId());
+            try {
+                resumeEmbeddingService.embedResume(saved.getId(), saved.getUserId(), content);
+            } catch (Exception embedException) {
+                log.error("Sync embedding also failed: {}", embedException.getMessage());
+            }
         }
 
         return ApiResponse.success("Resume uploaded successfully. Embedding in progress.", saved);
