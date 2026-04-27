@@ -25,6 +25,7 @@ The backend provides authentication, resume and job post management, AI analysis
 
 ▶ [Watch full demo on Loom](https://www.loom.com/share/3ea576ea2ac34f3294e141e2b7703a0c) — 2 min 50 sec walkthrough covering sign up, resume upload, job post management, match analysis, cover letter generation, and RAG chat.
 
+---
 ## Screenshots
 
 ### Login
@@ -39,6 +40,7 @@ The backend provides authentication, resume and job post management, AI analysis
 ### RAG Chat
 ![Chat](./screenshots/chat.jpg)
 
+---
 ## Features
 
 - **Resume Management** — Upload PDF resumes with automatic text extraction and vector embedding
@@ -51,6 +53,7 @@ The backend provides authentication, resume and job post management, AI analysis
 - **Multi-turn RAG Chat** — Context-aware Q&A grounded in resume content via pgvector retrieval
 - **Async Embedding Pipeline** — Kafka-based async embedding decouples upload from vector indexing
 
+---
 ## Tech Stack
 
 ### Backend
@@ -66,6 +69,8 @@ The backend provides authentication, resume and job post management, AI analysis
 | URL Parsing | Jsoup 1.18.3 |
 | Build | Maven |
 
+
+
 ### Frontend
 
 | Layer | Technology |
@@ -74,6 +79,8 @@ The backend provides authentication, resume and job post management, AI analysis
 | Styling | Tailwind CSS v4 |
 | Routing | React Router v6 |
 | HTTP | Axios |
+
+
 
 ### Infrastructure
 
@@ -84,6 +91,10 @@ The backend provides authentication, resume and job post management, AI analysis
 | Database | Railway PostgreSQL |
 | Containers | Docker |
 
+
+
+
+---
 ## Architecture
 
 ```mermaid
@@ -105,6 +116,8 @@ graph TD
     G --> G2[JobPostEmbeddingService]
 ```
 
+
+---
 ## RAG Pipeline
 
 ```mermaid
@@ -121,6 +134,8 @@ graph TD
     J --> K[GPT-4.1-mini generates response]
 ```
 
+
+---
 ## API Endpoints
 Below are representative endpoints for the main workflows.
 
@@ -132,6 +147,8 @@ Below are representative endpoints for the main workflows.
 | POST | `/api/users/login` | Login |
 | GET | `/api/users/me` | Current user |
 
+
+
 ### Resumes
 
 | Method | Endpoint | Description |
@@ -141,6 +158,8 @@ Below are representative endpoints for the main workflows.
 | GET | `/api/resumes/me` | List my resumes |
 | PUT | `/api/resumes/me/{id}` | Update resume |
 | DELETE | `/api/resumes/me/{id}` | Delete resume |
+
+
 
 ### Job Posts
 
@@ -153,6 +172,8 @@ Below are representative endpoints for the main workflows.
 | GET | `/api/job-posts/me/recommended` | JD recommendations by resume similarity |
 | DELETE | `/api/job-posts/me/{id}` | Delete job post |
 
+
+
 ### AI Analysis
 
 | Method | Endpoint | Description |
@@ -164,6 +185,8 @@ Below are representative endpoints for the main workflows.
 | POST | `/api/analysis/self-intro` | Generate self-introduction (3 lengths) |
 | GET | `/api/analysis/results/me` | History of match analyses |
 
+
+
 ### Chat (RAG)
 
 | Method | Endpoint | Description |
@@ -173,6 +196,9 @@ Below are representative endpoints for the main workflows.
 | GET | `/api/chat/sessions/{id}` | Get session with message history |
 | POST | `/api/chat/sessions/{id}/messages` | Send message → AI response |
 
+
+
+---
 ## Local Development Setup
 
 ### Prerequisites
@@ -249,6 +275,8 @@ npm run dev
 
 Frontend runs on `http://localhost:5173`
 
+
+---
 ## Deployment
 
 | Service | Platform | Notes |
