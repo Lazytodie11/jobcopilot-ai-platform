@@ -52,6 +52,7 @@ The backend provides authentication, resume and job post management, AI analysis
 - **JD Recommendation Ranking** — Semantic similarity search across saved job posts
 - **Multi-turn RAG Chat** — Context-aware Q&A grounded in resume content via pgvector retrieval
 - **Async Embedding Pipeline** — Kafka-based async embedding decouples upload from vector indexing
+- **Redis Caching** — Match analysis results cached in Redis with 1-hour TTL, reducing repeated database queries and OpenAI API calls in multi-turn chat sessions
 
 ---
 ## Tech Stack
@@ -68,6 +69,7 @@ The backend provides authentication, resume and job post management, AI analysis
 | PDF Parsing | Apache PDFBox 3.0.3 |
 | URL Parsing | Jsoup 1.18.3 |
 | Build | Maven |
+| Cache | Redis |
 
 
 
@@ -232,6 +234,7 @@ Required environment variables:
 | `DB_PASSWORD` | PostgreSQL password |
 | `DATABASE_URL` | Full JDBC URL e.g. `jdbc:postgresql://localhost:5432/jobcopilot` |
 | `OPENAI_API_KEY` | OpenAI API key |
+| `REDIS_URL` | Redis connection URL, e.g. `redis://localhost:6379` |
 | `JWT_SECRET` | Secret key for JWT signing (min 32 chars) |
 | `SPRING_PROFILES_ACTIVE` | Set to `prod` for production, omit for local |
 | `KAFKA_URL` | Kafka bootstrap server, e.g. `localhost:9092` |
@@ -281,6 +284,7 @@ Frontend runs on `http://localhost:5173`
 
 | Service | Platform | Notes |
 |---------|----------|-------|
+| Redis | Railway | 1-hour TTL match analysis cache |
 | Backend | Railway | Auto-deploys from GitHub main branch |
 | Frontend | Vercel | Auto-deploys from GitHub main branch |
 | Database | Railway PostgreSQL | pgvector extension enabled |
